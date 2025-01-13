@@ -327,18 +327,29 @@ async function getProxyIpInfo(driver, proxyUrl) {
 
     console.log("-> Lunched!")
 
-    // keep the process running
-    setInterval(() => {
-      driver.getTitle().then((title) => {
-        console.log(`-> [${USER}] Running...`, title)
-      })
+    let isRunning = true;
 
-      if (PROXY) {
-        console.log(`-> [${USER}] Running with proxy ${PROXY}...`)
-      } else {
-        console.log(`-> [${USER}] Running without proxy...`)
+    // 清理函数
+    async function cleanup() {
+      isRunning = false;
+      if(driver) {
+        await driver.quit();
       }
-    }, 30000)
+      // 清理所有代理连接
+      await proxyChain.closeAllProxies();
+      process.exit();
+    }
+
+    // 优化后的监控
+    setInterval(() => {
+      if(!isRunning) return;
+      
+      console.log(`-> [${USER}] Running...${PROXY ? ` with proxy ${PROXY}` : ' without proxy'}`);
+    }, 30000);
+
+    // 监听进程退出信号
+    process.on('SIGTERM', cleanup);
+    process.on('SIGINT', cleanup);
   } catch (error) {
     console.error("Error occurred:", error)
     // show error line
