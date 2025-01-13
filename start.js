@@ -4,6 +4,7 @@ const path = require('path')
 require('console-stamp')(console, {
   format: ':date(yyyy/mm/dd HH:MM:ss.l)'
 })
+require('dotenv').config()
 
 let proxies = []
 
@@ -15,24 +16,24 @@ try {
 
 // 2. start pm2 with PROXY env
 const { execSync } = require('child_process')
-const USER = process.env.APP_USER || ''
-const PASSWORD = process.env.APP_PASS || ''
+const USER = process.env.APP_USER
+const PASSWORD = process.env.APP_PASS
 
 if (!USER || !PASSWORD) {
-  console.error("Please set APP_USER and APP_PASS env variables")
+  console.error("Please set APP_USER and APP_PASS in .env file")
   process.exit()
 }
 
 if (proxies.length === 0) {
   console.error("No proxies found in proxies.txt, will start app without proxy...")
-  execSync(`APP_USER='${USER}' APP_PASS='${PASSWORD}' pm2 start app.js --name gradient-bot-no-proxy -l gradient-bot-no-proxy.log`)
+  execSync(`pm2 start app.js --name gradient-bot-no-proxy -l gradient-bot-no-proxy.log`)
   console.log('->  √ Started gradient-bot-no-proxy')
 } else {
   console.log(`-> Found ${proxies.length} proxies in proxies.txt`)
   let index = 0
   for (const proxy of proxies) {
     const name = `gradient-${index++}`
-    execSync(`PROXY=${proxy} APP_USER='${USER}' APP_PASS='${PASSWORD}' pm2 start app.js --name ${name} -l ${name}.log`)
+    execSync(`PROXY=${proxy} pm2 start app.js --name ${name} -l ${name}.log`)
     console.log(`-> Started ${name} with proxy ${proxy}`)
   }
 
